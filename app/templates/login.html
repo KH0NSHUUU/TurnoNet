@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+</head>
+<body>
+    <h1>Iniciar Sesión</h1>
+
+    <!-- Mensajes Flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul>
+            {% for category, message in messages %}
+                <li class="{{ category }}">{{ message }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('login') }}">
+        <p>
+            <label for="dni">DNI:</label><br>
+            <input type="text" id="dni" name="dni" required><br>
+        </p>
+        <p>
+            <label for="contraseña">Contraseña:</label><br>
+            <input type="password" id="contraseña" name="contraseña" required><br>
+        </p>
+        <p>
+            <input type="submit" value="Iniciar Sesión">
+        </p>
+    </form>
+    
+    <p>¿No tienes una cuenta?</p>
+    <a href="{{ url_for('register') }}">
+        <button>Registrar</button>
+    </a>
+</body>
+</html>
