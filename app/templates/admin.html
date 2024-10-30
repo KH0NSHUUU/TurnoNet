@@ -1,13 +1,297 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Dashboard - TurnoNet</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-    <h1>Bienvenido, {{ session['nombre']}} {{ session['apellido']}}</h1>
-    <p>DNI: {{ session['dni'] }}</p>
-    <p>Rol: {{ session['rol'] }}</p>
+    <div class="container-fluid">
+        <div class="row">
+            <nav class="col-md-2 d-none d-md-block bg-light sidebar">
+                <div class="position-sticky">
+                    <h5 class="text-center">TurnoNet</h5>
+                    <button id="btnGestionarEmpleados" class="btn btn-light">Gestión de Empleados</button>
+                    <button id="btnGestionarServicios" class="btn btn-light">Gestión de Servicios</button>
+                    <a href="{{ url_for('logout') }}" class="btn btn-light">Cerrar Sesión</a>
+                </div>
+            </nav>
+
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-4">
+                <div id="gestionEmpleados" class="mt-3" style="display:none;">
+                    <h2>Empleados</h2>
+                    <div id="empleadosContainer"></div>
+                    <button id="btnAgregarEmpleado" class="btn btn-primary">Agregar Empleado</button>
+                    <div id="formAgregarEmpleado" class="mt-3" style="display:none;">
+                        <h5>Agregar Empleado</h5>
+                        <form id="empleadoForm">
+                            <div class="mb-3">
+                                <label for="dniEmpleado">DNI</label>
+                                <input type="text" class="form-control" id="dniEmpleado" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="nombreEmpleado">Nombre</label>
+                                <input type="text" class="form-control" id="nombreEmpleado" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="apellidoEmpleado">Apellido</label>
+                                <input type="text" class="form-control" id="apellidoEmpleado" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="telefonoEmpleado">Teléfono</label>
+                                <input type="text" class="form-control" id="telefonoEmpleado" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="correoEmpleado">Correo</label>
+                                <input type="email" class="form-control" id="correoEmpleado" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="contraseñaEmpleado">Contraseña</label>
+                                <input type="password" class="form-control" id="contraseñaEmpleado" required>
+                            </div>
+                            <button type="submit" class="btn btn-success">Guardar</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div id="gestionServicios" class="mt-3" style="display:none;">
+                    <h2>Servicios</h2>
+                    <div id="serviciosContainer"></div>
+                    <button id="btnAgregarServicio" class="btn btn-primary">Agregar Servicio</button>
+                    <div id="formAgregarServicio" class="mt-3" style="display:none;">
+                        <h5>Agregar Servicio</h5>
+                        <form id="servicioForm">
+                            <div class="mb-3">
+                                <label for="nombreServicio" class="form-label">Nombre del Servicio</label>
+                                <input type="text" class="form-control" id="nombreServicio" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="descripcionServicio" class="form-label">Descripción</label>
+                                <input type="text" class="form-control" id="descripcionServicio" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="precioServicio" class="form-label">Precio</label>
+                                <input type="number" class="form-control" id="precioServicio" required step="0.01">
+                            </div>
+                            <button type="submit" class="btn btn-success">Guardar</button>
+                        </form>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function() {
+            // Cargar empleados
+            function cargarEmpleados() {
+                $.ajax({
+                    url: '/admin/empleados', // Cambia esto por tu ruta
+                    method: 'GET',
+                    success: function(data) {
+                        $('#empleadosContainer').empty();
+                        data.forEach(function(empleado) {
+                            $('#empleadosContainer').append(`
+                                <div id="empleado-${empleado.dni}">
+                                    <strong>${empleado.nombre}</strong> - ${empleado.apellido} - ${empleado.contacto} - ${empleado.correo}
+                                    <button class="btn btn-warning btnModificar" data-id="${empleado.dni}">Modificar</button>
+                                    <button class="btn btn-danger btnEliminar" data-id="${empleado.dni}">Eliminar</button>
+                                    <div class="formModificar mt-2" style="display: none;">
+                                        <input type="text" class="form-control" placeholder="Nuevo nombre" value="${empleado.nombre}"/>
+                                        <input type="text" class="form-control" placeholder="Nuevo apellido" value="${empleado.apellido}"/>
+                                        <input type="text" class="form-control" placeholder="Nuevo teléfono" value="${empleado.contacto}"/>
+                                        <input type="email" class="form-control" placeholder="Nuevo correo" value="${empleado.correo}"/>
+                                        <input type="text" class="form-control" placeholder="Nueva contraseña" value="${empleado.contraseña}"/>
+                                        <button class="btn btn-success btnGuardar" data-id="${empleado.dni}">Guardar Cambios</button>
+                                    </div>
+                                </div>
+                            `);
+                        });
+                    },
+                    error: function() {
+                        alert('Error al cargar los empleados.');
+                    }
+                });
+            }
+
+            // Gestión de empleados
+            $('#btnGestionarEmpleados').click(function() {
+                $('#gestionEmpleados').show();
+                $('#gestionServicios').hide();
+                cargarEmpleados();
+            });
+
+            // Agregar empleado
+            $('#empleadoForm').submit(function(e) {
+                e.preventDefault();
+                const dni = $('#dniEmpleado').val();
+                const nombre = $('#nombreEmpleado').val();
+                const apellido = $('#apellidoEmpleado').val();
+                const telefono = $('#telefonoEmpleado').val();
+                const correo = $('#correoEmpleado').val();
+                const contraseña = $('#contraseñaEmpleado').val();
+                
+                $.ajax({
+                    url: '/admin/empleados', // Cambia esto por tu ruta
+                    method: 'POST',
+                    data: { 
+                        dni: dni,
+                        nombre: nombre,
+                        apellido: apellido,
+                        telefono: telefono,
+                        correo: correo,
+                        contraseña: contraseña
+                    },
+                    success: function() {
+                        cargarEmpleados();
+                        $('#formAgregarEmpleado').hide();
+                        $('#empleadoForm')[0].reset();
+                    },
+                    error: function() {
+                        alert('Error al agregar el empleado.');
+                    }
+                });
+            });
+
+            // Mostrar formulario para agregar empleado
+            $('#btnAgregarEmpleado').click(function() {
+                $('#formAgregarEmpleado').toggle();
+            });
+
+            // Guardar cambios en el empleado
+            $(document).on('click', '.btnGuardar', function() {
+                const empleadoId = $(this).data('id');
+                const nuevoNombre = $(this).siblings('input[type="text"]').eq(0).val();
+                const nuevoApellido = $(this).siblings('input[type="text"]').eq(1).val();
+                const nuevoTelefono = $(this).siblings('input[type="text"]').eq(2).val();
+                const nuevoCorreo = $(this).siblings('input[type="email"]').val();
+                const nuevaContraseña = $(this).siblings('input[type="text"]').val();
+
+                let datosActualizar = {};
+                if (nuevoNombre) datosActualizar.nombre = nuevoNombre;
+                if (nuevoApellido) datosActualizar.apellido = nuevoApellido;
+                if (nuevoTelefono) datosActualizar.telefono = nuevoTelefono;
+                if (nuevoCorreo) datosActualizar.correo = nuevoCorreo;
+                if (nuevaContraseña) datosActualizar.contraseña = nuevaContraseña;
+
+                $.ajax({
+                    url: `/admin/empleados/${empleadoId}`,
+                    method: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify(datosActualizar),
+                    success: function() {
+                        cargarEmpleados();
+                    },
+                    error: function() {
+                        alert('Error al modificar el empleado.');
+                    }
+                });
+            });
+
+            // Mostrar formulario de modificación
+            $(document).on('click', '.btnModificar', function() {
+                $(this).siblings('.formModificar').toggle();
+            });
+
+            // Eliminar empleado
+            $(document).on('click', '.btnEliminar', function() {
+                const empleadoId = $(this).data('id');
+                $.ajax({
+                    url: `/admin/empleados/${empleadoId}`,
+                    method: 'DELETE',
+                    success: function() {
+                        cargarEmpleados();
+                    },
+                    error: function() {
+                        alert('Error al eliminar el empleado.');
+                    }
+                });
+            });
+
+            // Gestión de servicios
+            $('#btnGestionarServicios').click(function() {
+                $('#gestionServicios').show();
+                $('#gestionEmpleados').hide();
+                cargarServicios();
+            });
+
+            // Cargar servicios
+            function cargarServicios() {
+                $.ajax({
+                    url: '/admin/servicios', // Cambia esto por tu ruta
+                    method: 'GET',
+                    success: function(data) {
+                        $('#serviciosContainer').empty();
+                        data.forEach(function(servicio) {
+                            $('#serviciosContainer').append(`
+                                <div id="servicio-${servicio.id}">
+                                    <strong>${servicio.nombre}</strong> - ${servicio.descripcion} - $${servicio.precio}
+                                    <button class="btn btn-warning btnModificarServicio" data-id="${servicio.id}">Modificar</button>
+                                    <button class="btn btn-danger btnEliminarServicio" data-id="${servicio.id}">Eliminar</button>
+                                    <div class="formModificarServicio mt-2" style="display: none;">
+                                        <input type="text" class="form-control" placeholder="Nuevo nombre" value="${servicio.nombre}"/>
+                                        <input type="text" class="form-control" placeholder="Nueva descripción" value="${servicio.descripcion}"/>
+                                        <input type="number" class="form-control" placeholder="Nuevo precio" value="${servicio.precio}" step="0.01"/>
+                                        <button class="btn btn-success btnGuardarServicio" data-id="${servicio.id}">Guardar Cambios</button>
+                                    </div>
+                                </div>
+                            `);
+                        });
+                    },
+                    error: function() {
+                        alert('Error al cargar los servicios.');
+                    }
+                });
+            }
+
+            // Guardar cambios en el servicio
+            $(document).on('click', '.btnGuardarServicio', function() {
+                const servicioId = $(this).data('id');
+                const nuevoNombre = $(this).siblings('input[type="text"]').eq(0).val();
+                const nuevaDescripcion = $(this).siblings('input[type="text"]').eq(1).val();
+                const nuevoPrecio = $(this).siblings('input[type="number"]').val();
+
+                let datosActualizar = {};
+                if (nuevoNombre) datosActualizar.nombre = nuevoNombre;
+                if (nuevaDescripcion) datosActualizar.descripcion = nuevaDescripcion;
+                if (nuevoPrecio) datosActualizar.precio = nuevoPrecio;
+
+                $.ajax({
+                    url: `/admin/servicios/${servicioId}`,
+                    method: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify(datosActualizar),
+                    success: function() {
+                        cargarServicios();
+                    },
+                    error: function() {
+                        alert('Error al modificar el servicio.');
+                    }
+                });
+            });
+
+            // Mostrar formulario de modificación para servicio
+            $(document).on('click', '.btnModificarServicio', function() {
+                $(this).siblings('.formModificarServicio').toggle();
+            });
+
+            // Eliminar servicio
+            $(document).on('click', '.btnEliminarServicio', function() {
+                const servicioId = $(this).data('id');
+                $.ajax({
+                    url: `/admin/servicios/${servicioId}`,
+                    method: 'DELETE',
+                    success: function() {
+                        cargarServicios();
+                    },
+                    error: function() {
+                        alert('Error al eliminar el servicio.');
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>

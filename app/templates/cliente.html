@@ -6,6 +6,9 @@
     <title>Document</title>
 </head>
 <body>
+    <nav>
+        <a href="{{ url_for('logout') }}">Cerrar Sesión</a>
+    </nav>
     <h1>Bienvenido, {{ session['nombre']}} {{ session['apellido']}}</h1>
     <p>DNI: {{ session['dni'] }}</p>
     <p>Rol: {{ session['rol'] }}</p>
