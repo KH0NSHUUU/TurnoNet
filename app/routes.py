@@ -197,20 +197,26 @@ def modificar_perfil_empleado():
 
     if 'dni' in datos:
         cur.execute('UPDATE empleados SET dni=%s where dni=%s',(datos['dni'],datos['dni']))
+        cur.execute('UPDATE usuarios SET dni=%s where dni=%s',(datos['dni'],datos['dni']))
     if 'nombre' in datos:
         cur.execute('UPDATE empleados SET nombre=%s where dni=%s',(datos['nombre'],datos['dni']))   
+        cur.execute('UPDATE usuarios SET nombre=%s where dni=%s',(datos['nombre'],datos['dni']))   
     if 'apellido' in datos:
         cur.execute('UPDATE empleados SET apellido=%s where dni=%s',(datos['apellido'],datos['dni']))
+        cur.execute('UPDATE usuarios SET apellido=%s where dni=%s',(datos['apellido'],datos['dni']))
     if 'contacto' in datos:
         cur.execute('UPDATE empleados SET contacto=%s where dni=%s',(datos['contacto'],datos['dni']))
+        cur.execute('UPDATE usuarios SET contacto=%s where dni=%s',(datos['contacto'],datos['dni']))
     if 'correo' in datos:
         cur.execute('UPDATE empleados SET correo=%s where dni=%s',(datos['correo'],datos['dni']))
+        cur.execute('UPDATE usuarios SET correo=%s where dni=%s',(datos['correo'],datos['dni']))
     if 'contraseña' in datos:
         cur.execute('UPDATE empleados SET contraseña=%s where dni=%s',(datos['contraseña'],datos['dni']))
+        cur.execute('UPDATE usuarios SET contraseña=%s where dni=%s',(datos['contraseña'],datos['dni']))
 
     mysql.connection.commit()
     cur.close()
-
+    session['nombre']=datos['nombre']
     return jsonify({'status': 'success'})
 
 # Clientes
@@ -221,3 +227,28 @@ def cliente():
     else:
         flash('Acceso denegado.', 'danger')
         return redirect(url_for('login'))
+#turnos
+@app.route('/empleado/turnos', methods=['GET'])
+def obtener_turnos_empleado(): 
+    if 'rol' in session and session['rol'] == 'empleado': 
+        id_empleado = session['dni']
+        cur = mysql.connection.cursor()
+        
+        cur.execute('SELECT t.fecha, s.nombre, c.nombre, c.apellido '
+                    'FROM turnos AS t '
+                    'INNER JOIN servicios AS s ON t.id_servicio = s.id '
+                    'INNER JOIN clientes AS c ON t.id_cliente = c.dni '
+                    'WHERE t.id_empleado = %s', (id_empleado,))
+        
+        turnos = cur.fetchall()
+        cur.close()
+      
+        # Cambiar los nombres de las claves para que sean únicos
+        return jsonify([
+            {'fecha': turno[0], 'NomServicio': turno[1], 'NombreCliente': turno[2], 'apellido': turno[3]} for turno in turnos
+        ])
+    else: 
+        flash('Acceso denegado.')
+        return redirect(url_for('login'))
+
+    

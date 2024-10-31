@@ -15,7 +15,7 @@
             <nav class="col-md-2 d-none d-md-block bg-light sidebar">
                 <div class="position-sticky">
                     <h5 class="text-center">TurnoNet</h5>
-                    <p class="text-center">Bienvenido, {{ session['nombre'] }}</p> <!-- Muestra el nombre del empleado -->
+                    <p id="nombreBienvenida">Bienvenido, {{ session['nombre'] }}</p> <!-- Muestra el nombre del empleado -->
                     <input style="display: none;" type="number" id="dniEmpleado" value="{{ session['dni'] }}"> 
                     <button id="btnModificarPerfil" class="btn btn-light">Modificar Perfil</button>
                     <button id="btnVerTurnos" class="btn btn-light">Ver Mis Turnos</button>
@@ -31,19 +31,19 @@
                     <form id="perfilForm">
                         <div class="mb-3">
                             <label for="nombreEmpleado">Nombre</label>
-                            <input type="text" class="form-control" id="nombreEmpleado" value="{{ session.nombre }}" required>
+                            <input type="text" class="form-control" id="nombreEmpleado" required>
                         </div>
                         <div class="mb-3">
                             <label for="apellidoEmpleado">Apellido</label>
-                            <input type="text" class="form-control" id="apellidoEmpleado" value="{{ session.apellido }}" required>
+                            <input type="text" class="form-control" id="apellidoEmpleado"  required>
                         </div>
                         <div class="mb-3">
                             <label for="telefonoEmpleado">Teléfono</label>
-                            <input type="text" class="form-control" id="telefonoEmpleado" value="{{ session.telefono }}" required>
+                            <input type="text" class="form-control" id="telefonoEmpleado"  required>
                         </div>
                         <div class="mb-3">
                             <label for="correoEmpleado">Correo</label>
-                            <input type="email" class="form-control" id="correoEmpleado" value="{{ session.correo }}" required>
+                            <input type="email" class="form-control" id="correoEmpleado" required>
                         </div>
                         <div class="mb-3">
                             <label for="fotoEmpleado">Foto de Perfil</label>
@@ -52,13 +52,12 @@
                         <button type="submit" class="btn btn-success">Guardar Cambios</button>
                     </form>
                 </div>
-
+                
                 <!-- Turnos del empleado -->
                 <div id="verTurnos" class="mt-3" style="display:none;">
                     <h2>Mis Turnos</h2>
                     <div id="turnosContainer"></div>
                 </div>
-
             </main>
         </div>
     </div>
@@ -77,6 +76,47 @@
                 $('#verTurnos').show();
                 cargarTurnos();
             });
+            
+            // Guardar cambios en el perfil
+            $('#perfilForm').submit(function(e) {
+                e.preventDefault();
+
+                const nuevoNombre = $('#nombreEmpleado').val();
+                const dni = $('#dniEmpleado').val();
+                const apellido = $('#apellidoEmpleado').val();
+                const contacto = $('#telefonoEmpleado').val();
+                const correo = $('#correoEmpleado').val();
+
+                // Crear el objeto con los datos a actualizar
+                let datosActualizar = {
+                    dni: dni,
+                    nombre: nuevoNombre,
+                    apellido: apellido,
+                    contacto: contacto,
+                    correo: correo
+                };
+
+                // Enviar los datos con AJAX
+                $.ajax({
+                    url: '/empleado/perfil', // Cambia esto por tu ruta de modificación de perfil
+                    method: 'PUT',
+                    contentType: 'application/json', // Enviar datos como JSON
+                    data: JSON.stringify(datosActualizar), // Convertir el objeto a una cadena JSON
+                    success: function() {
+                        alert('Perfil actualizado correctamente.');
+
+                        // Actualizar el mensaje de bienvenida con el nuevo nombre
+                        $('#nombreBienvenida').text(`Bienvenido, ${nuevoNombre}`);
+
+                        // Limpiar formulario y cerrar el modal de modificar perfil
+                        $('#perfilForm')[0].reset();
+                        $('#modificarPerfil').hide();
+                    },
+                    error: function() {
+                        alert('Error al actualizar el perfil.');
+                    }
+                });
+            });
 
             // Función para cargar los turnos asignados
             function cargarTurnos() {
@@ -86,9 +126,14 @@
                     success: function(data) {
                         $('#turnosContainer').empty();
                         data.forEach(function(turno) {
+                            const fecha = turno[0]; // datetime
+                            const nombreServicio = turno[1]; // ID del servicio
+                            const nombreCliente = turno[2]; // ID del cliente
+                            const apellidoCliente = turno[3];
+                            console.log("aqui",nombreServicio, nombreCliente);
                             $('#turnosContainer').append(`
                                 <div id="turno-${turno.id}">
-                                    <strong>${turno.fecha}</strong> - ${turno.servicio} - Cliente: ${turno.cliente}
+                                    <strong>${fecha}</strong> - Servicio: ${nombreServicio} - Cliente: ${nombreCliente} ${apellidoCliente} 
                                 </div>
                             `);
                         });
@@ -98,41 +143,44 @@
                     }
                 });
             }
-        // Guardar cambios en el perfil
-    $('#perfilForm').submit(function(e) {
-        e.preventDefault();
-
-        const dni = $('#dniEmpleado').val();
-        const nombre = $('#nombreEmpleado').val();
-        const apellido = $('#apellidoEmpleado').val();
-        const contacto = $('#telefonoEmpleado').val();
-        const correo = $('#correoEmpleado').val();
-
-        // Crear el objeto con los datos a actualizar
-        let datosActualizar = {};
-        if (dni) datosActualizar.dni = dni;
-        if (nombre) datosActualizar.nombre = nombre;
-        if (apellido) datosActualizar.apellido = apellido;
-        if (contacto) datosActualizar.contacto = contacto;
-        if (correo) datosActualizar.correo = correo;
-
-        // Enviar los datos con AJAX
-        $.ajax({
-            url: '/empleado/perfil', // Cambia esto por tu ruta de modificación de perfil
-            method: 'PUT',
-            contentType: 'application/json', // Enviar datos como JSON
-            data: JSON.stringify(datosActualizar), // Convertir el objeto a una cadena JSON
-            success: function() {
-                alert('Perfil actualizado correctamente.');
-            },
-            error: function() {
-                alert('Error al actualizar el perfil.');
-            }
         });
+        //funcion para ver los turnos que tiene el empleado
+        $(document).ready(function() {
+        $('#btnVerTurnos').click(function() {
+            $('#modificarPerfil').hide();
+            $('#verTurnos').show();
+            cargarTurnos();
+        });
+
+        function cargarTurnos() {
+            $.ajax({
+                url: '/empleado/turnos', // Ruta para cargar los turnos
+                method: 'GET',
+                success: function(data) {
+                    $('#turnosContainer').empty();
+                    data.forEach(function(turno) {
+                        const fecha = turno.fecha; // datetime
+                        const nombreServicio = turno.NomServicio; // Nombre del servicio
+                        const nombreCliente = turno.NombreCliente; // Nombre del cliente
+                        const apellidoCliente = turno.apellido;
+                        
+                        // Agregar los datos al contenedor
+                        $('#turnosContainer').append(`
+                            <div id="turno-${turno.id}">
+                                <strong>${fecha}</strong> - Servicio: ${nombreServicio} - Cliente: ${nombreCliente} ${apellidoCliente} 
+                            </div>
+                        `);
+                    });
+        },
+        error: function() {
+            alert('Error al cargar los turnos.');
+        }
     });
+  }
 
+});
 
-        });
-    </script>
+</script>
+    
 </body>
 </html>
