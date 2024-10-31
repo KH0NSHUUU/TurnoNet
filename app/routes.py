@@ -82,7 +82,10 @@ def gestionar_servicios():#si es get lista los servicios
         cur=mysql.connection.cursor()
         cur.execute('SELECT MAX(id) FROM servicios')
         id=cur.fetchone()
-        idd=id[0]+1
+        if not id[0]:
+            idd=1
+        else:
+            idd=id[0]+1
         cur.execute('INSERT INTO servicios (id,nombre,descripcion,precio) values (%s,%s,%s,%s)',(idd,nombre,descripcion,precio))
         mysql.connection.commit()
         cur.close()
@@ -119,7 +122,6 @@ def eliminar_servicio(servicio_id):
 @app.route('/admin/empleados/<int:dni>', methods=['PUT'])
 def modificar_emplezados(dni):
     datos=request.get_json()
-    print(datos)
     cur=mysql.connection.cursor()
 
     if 'dni' in datos:
@@ -187,8 +189,29 @@ def empleado():
     
 @app.route('/empleado/perfil', methods=['PUT'])
 def modificar_perfil_empleado():
-    pass
+    datos=request.get_json()
+    print(datos)
+    cur=mysql.connection.cursor()
+
     
+
+    if 'dni' in datos:
+        cur.execute('UPDATE empleados SET dni=%s where dni=%s',(datos['dni'],datos['dni']))
+    if 'nombre' in datos:
+        cur.execute('UPDATE empleados SET nombre=%s where dni=%s',(datos['nombre'],datos['dni']))   
+    if 'apellido' in datos:
+        cur.execute('UPDATE empleados SET apellido=%s where dni=%s',(datos['apellido'],datos['dni']))
+    if 'contacto' in datos:
+        cur.execute('UPDATE empleados SET contacto=%s where dni=%s',(datos['contacto'],datos['dni']))
+    if 'correo' in datos:
+        cur.execute('UPDATE empleados SET correo=%s where dni=%s',(datos['correo'],datos['dni']))
+    if 'contraseña' in datos:
+        cur.execute('UPDATE empleados SET contraseña=%s where dni=%s',(datos['contraseña'],datos['dni']))
+
+    mysql.connection.commit()
+    cur.close()
+
+    return jsonify({'status': 'success'})
 
 # Clientes
 @app.route('/cliente')

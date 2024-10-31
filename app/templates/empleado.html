@@ -16,6 +16,7 @@
                 <div class="position-sticky">
                     <h5 class="text-center">TurnoNet</h5>
                     <p class="text-center">Bienvenido, {{ session['nombre'] }}</p> <!-- Muestra el nombre del empleado -->
+                    <input style="display: none;" type="number" id="dniEmpleado" value="{{ session['dni'] }}"> 
                     <button id="btnModificarPerfil" class="btn btn-light">Modificar Perfil</button>
                     <button id="btnVerTurnos" class="btn btn-light">Ver Mis Turnos</button>
                     <a href="{{ url_for('logout') }}" class="btn btn-light">Cerrar Sesión</a>
@@ -97,39 +98,40 @@
                     }
                 });
             }
+        // Guardar cambios en el perfil
+    $('#perfilForm').submit(function(e) {
+        e.preventDefault();
 
-            // Guardar cambios en el perfil
-            $('#perfilForm').submit(function(e) {
-                e.preventDefault();
-                const nombre = $('#nombreEmpleado').val();
-                const apellido = $('#apellidoEmpleado').val();
-                const telefono = $('#telefonoEmpleado').val();
-                const correo = $('#correoEmpleado').val();
-                const foto = $('#fotoEmpleado')[0].files[0]; // Obtener la foto
+        const dni = $('#dniEmpleado').val();
+        const nombre = $('#nombreEmpleado').val();
+        const apellido = $('#apellidoEmpleado').val();
+        const contacto = $('#telefonoEmpleado').val();
+        const correo = $('#correoEmpleado').val();
 
-                let formData = new FormData();
-                formData.append('nombre', nombre);
-                formData.append('apellido', apellido);
-                formData.append('telefono', telefono);
-                formData.append('correo', correo);
-                if (foto) {
-                    formData.append('foto', foto); // Adjuntar la foto si se ha seleccionado
-                }
+        // Crear el objeto con los datos a actualizar
+        let datosActualizar = {};
+        if (dni) datosActualizar.dni = dni;
+        if (nombre) datosActualizar.nombre = nombre;
+        if (apellido) datosActualizar.apellido = apellido;
+        if (contacto) datosActualizar.contacto = contacto;
+        if (correo) datosActualizar.correo = correo;
 
-                $.ajax({
-                    url: '/empleado/perfil', // Cambia esto por tu ruta de modificación de perfil
-                    method: 'POST',
-                    processData: false,
-                    contentType: false,
-                    data: formData,
-                    success: function() {
-                        alert('Perfil actualizado correctamente.');
-                    },
-                    error: function() {
-                        alert('Error al actualizar el perfil.');
-                    }
-                });
-            });
+        // Enviar los datos con AJAX
+        $.ajax({
+            url: '/empleado/perfil', // Cambia esto por tu ruta de modificación de perfil
+            method: 'PUT',
+            contentType: 'application/json', // Enviar datos como JSON
+            data: JSON.stringify(datosActualizar), // Convertir el objeto a una cadena JSON
+            success: function() {
+                alert('Perfil actualizado correctamente.');
+            },
+            error: function() {
+                alert('Error al actualizar el perfil.');
+            }
+        });
+    });
+
+
         });
     </script>
 </body>

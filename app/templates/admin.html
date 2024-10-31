@@ -50,7 +50,7 @@
                             </div>
                             <div class="mb-3">
                                 <label for="contraseñaEmpleado">Contraseña</label>
-                                <input type="password" class="form-control" id="contraseñaEmpleado" required>
+                                <input type="text" class="form-control" id="contraseñaEmpleado" required>
                             </div>
                             <button type="submit" class="btn btn-success">Guardar</button>
                         </form>
@@ -123,13 +123,14 @@
                 cargarEmpleados();
             });
 
+
             // Agregar empleado
             $('#empleadoForm').submit(function(e) {
                 e.preventDefault();
                 const dni = $('#dniEmpleado').val();
                 const nombre = $('#nombreEmpleado').val();
                 const apellido = $('#apellidoEmpleado').val();
-                const telefono = $('#telefonoEmpleado').val();
+                const contacto = $('#telefonoEmpleado').val();
                 const correo = $('#correoEmpleado').val();
                 const contraseña = $('#contraseñaEmpleado').val();
                 
@@ -140,7 +141,7 @@
                         dni: dni,
                         nombre: nombre,
                         apellido: apellido,
-                        telefono: telefono,
+                        contacto: contacto,
                         correo: correo,
                         contraseña: contraseña
                     },
@@ -154,12 +155,44 @@
                     }
                 });
             });
+            // Agregar servicio
+            $('#servicioForm').submit(function(e) {
+                e.preventDefault();
+                const nombre = $('#nombreServicio').val();
+                const descripcion= $('#descripcionServicio').val();
+                const precio = $('#precioServicio').val();
+                
+                console.log(nombre+descripcion+precio)
+                
+                $.ajax({
+                    url: '/admin/servicios', // Cambia esto por tu ruta
+                    method: 'POST',
+                    data: { 
+                        nombre: nombre,
+                        descripcion: descripcion,
+                        precio: precio,
+                    },
+                    success: function() {
+                        cargarServicios();
+                        $('#formAgregarServicio').hide();
+                        $('#servicioForm')[0].reset();
+                    },
+                    error: function() {
+                        alert('Error al agregar el servio.');
+                    }
+                });
+            });
+
 
             // Mostrar formulario para agregar empleado
             $('#btnAgregarEmpleado').click(function() {
                 $('#formAgregarEmpleado').toggle();
             });
 
+            //Mostrar formulario para agregar servicio 
+            $('#btnAgregarServicio').click(function() {
+                $('#formAgregarServicio').toggle();
+            });
             // Guardar cambios en el empleado
             $(document).on('click', '.btnGuardar', function() {
                 const empleadoId = $(this).data('id');
