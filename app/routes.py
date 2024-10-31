@@ -20,6 +20,11 @@ def login():
             session['apellido'] = user[2]
             session['rol'] = user[6]  # Rol del usuario
 
+            next_page=request.args.get('next')
+
+            if next_page:
+                return redirect(next_page)
+
             if user[6] == 'admin':
                 return redirect(url_for('admin_dashboard'))
             elif user[6] == 'empleado':
@@ -192,9 +197,6 @@ def modificar_perfil_empleado():
     datos=request.get_json()
     print(datos)
     cur=mysql.connection.cursor()
-
-    
-
     if 'dni' in datos:
         cur.execute('UPDATE empleados SET dni=%s where dni=%s',(datos['dni'],datos['dni']))
         cur.execute('UPDATE usuarios SET dni=%s where dni=%s',(datos['dni'],datos['dni']))
@@ -219,14 +221,80 @@ def modificar_perfil_empleado():
     session['nombre']=datos['nombre']
     return jsonify({'status': 'success'})
 
-# Clientes
+@app.route('/servicios', methods=['GET', 'POST'])
+def listar_servicios():
+    # Verifica si el usuario está logueado
+    if 'dni' not in session:
+        # Redirigir a la página de login y pasar la URL actual como 'next'
+        return redirect(url_for('login', next=request.url))
+
+    if 'rol' in session and session['rol'] == 'cliente':
+        cur = mysql.connection.cursor()
+
+        if request.method == 'GET':
+            cur.execute('SELECT * FROM servicios')
+            servicios = cur.fetchall()
+            cur.execute('SELECT * FROM empleados')
+            empleados = cur.fetchall()
+            cur.close()
+            return render_template('servicios.html', servicios=servicios, empleados=empleados)
+
+        elif request.method == 'POST':
+            servicio_id = request.form['servicio_id']
+            fecha = request.form['fecha']
+            hora = request.form['hora']
+            fechaHora = f'{fecha} {hora}'
+            estado = 'tomado'
+            empleado_id = request.form['empleado_id']
+            dni_cliente = session['dni']  # Obteniendo el dni del cliente desde la sesión
+            print(f"Servicio ID: {servicio_id}, Fecha: {fecha}, Hora: {hora}, Empleado ID: {empleado_id}, DNI Cliente: {dni_cliente}")
+            cur.execute('INSERT INTO turnos(fecha, estado, id_empleado, id_cliente, id_servicio) values (%s, %s, %s, %s, %s)', (fechaHora, estado, empleado_id, dni_cliente, servicio_id))
+            mysql.connection.commit()
+            cur.close()
+            return jsonify(success=True)
+
+
 @app.route('/cliente')
 def cliente():
     if 'rol' in session and session['rol'] == 'cliente':
-        return render_template('cliente.html')
+        return render_template('cliente.html', cliente=cliente)
     else:
         flash('Acceso denegado.', 'danger')
         return redirect(url_for('login'))
+    
+@app.route('/cliente/perfil')
+def perfil():
+    if 'rol' in session and session['rol'] == 'cliente':
+        # Aquí podrías obtener los datos del cliente desde la base de datos
+        return render_template('perfil.html')  # Crea este archivo HTML para el perfil del cliente.
+    else:
+        return redirect(url_for('login'))
+
+@app.route('/cliente/perfil/actualizar', methods=['POST'])
+def actualizar_perfil():
+    if 'rol' in session and session['rol'] == 'cliente':
+        # Obtener datos del formulario
+        print(request.form)
+        dni=request.form['dni']
+        nuevo_nombre = request.form['nombre']
+        nuevo_email = request.form['email']
+
+        
+        cur=mysql.connection.cursor()
+
+        cur.execute('UPDATE clientes SET nombre=%s where dni=%s',(nuevo_nombre,dni))
+        cur.execute('UPDATE usuarios SET nombre=%s where dni=%s',(nuevo_nombre,dni))
+
+        mysql.connection.commit()
+        cur.close()
+
+        # Actualizar la sesión (opcional)
+        session['nombre'] = nuevo_nombre
+
+        return redirect(url_for('perfil'))  # Redirigir de nuevo al perfil
+    else:
+        return redirect(url_for('login'))
+
 #turnos
 @app.route('/empleado/turnos', methods=['GET'])
 def obtener_turnos_empleado(): 
@@ -250,5 +318,4 @@ def obtener_turnos_empleado():
     else: 
         flash('Acceso denegado.')
         return redirect(url_for('login'))
-
     

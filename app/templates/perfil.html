@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Página del Cliente - TurnoNet</title>
-    <link rel="stylesheet" href="../static/styles.css">
-    <!-- Bootstrap CSS -->
+    <title>Perfil del Cliente - TurnoNet</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
@@ -23,7 +22,10 @@
                         <a class="nav-link" href="/cliente">Inicio</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="/servicios">Servicios</a>
+                        <a class="nav-link" href="/servicios">Servicios</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Sobre Nosotros</a>
                     </li>
                     {% if session['rol'] == 'cliente' %}
                         <li class="nav-item dropdown">
@@ -51,11 +53,39 @@
         <div class="row">
             <div class="col-lg-8 mx-auto">
                 <div class="card p-4">
-                    <h1 class="card-title">Bienvenido a TurnoNet</h1>
-                    <p class="card-text">
-                        Gestión eficiente de turnos para estéticas, peluquerías y otros negocios. Automatiza la reserva de citas y mejora la experiencia de tus clientes.
-                    </p>
-                    <a href="/servicios" class="btn btn-primary">Ver Servicios</a> <!-- Redirecciona a servicios -->
+                    <h1 class="card-title">Perfil de {{ session['nombre'] }}</h1>
+                    <p class="card-text">Aquí puedes ver y modificar tus datos.</p>
+                    
+                    <!-- Formulario para modificar datos -->
+                    <form action="/cliente/perfil/actualizar" method="POST" class="mb-4">
+                        <input type="hidden" id="dni" name="dni" value="{{ session['dni'] }}">
+                        <div class="mb-3">
+                            <label for="nombre" class="form-label">Nombre</label>
+                            <input type="text" class="form-control" id="nombre" name="nombre" value="{{ session['nombre'] }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ session['email'] }}" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Actualizar</button>
+                    </form>
+
+                    <hr>
+
+                    <!-- Sección de Turnos Asignados -->
+                    <h3>Tus Turnos</h3>
+                    <div class="row">
+                        {% for turno in turnos %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ turno.servicio }}</h5>
+                                        <p class="card-text">{{ turno.fecha }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
         </div>
@@ -64,7 +94,7 @@
     <!-- Footer -->
     <footer class="footer py-3 mt-5">
         <div class="container text-center">
-            <span style="color: white;">&copy; 2024 TurnoNet. Todos los derechos reservados.</span>
+            <span>&copy; 2024 TurnoNet. Todos los derechos reservados.</span>
         </div>
     </footer>
 
