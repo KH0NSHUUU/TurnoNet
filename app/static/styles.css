@@ -1,14 +1,140 @@
+/* Estilos para la Navbar */
+.navbar-custom {
+    background-color: #cac7c2; /* Color de fondo */
+    opacity: 0.8; /* Ajusta el nivel de transparencia (0.0 a 1.0) */
+    padding: 10px;
+    color: white;
+    font-weight: bold;
+   height: 14%
+   
+}
+.navbar-custom .navbar-brand,
+.navbar-custom .nav-link {
+    color: #ffffff !important; /* Blanco para el texto por defecto */
+   
+}
 body {
-    background-color: #343a40; /* Fondo oscuro */
-    color: #ffffff; /* Texto claro */
+    padding-top: 70px; /* Espacio para la barra de navegación fija */
+    background-color: #d4cdc3;
 }
-.navbar, .footer {
-    background-color: #212529; /* Fondo aún más oscuro */
+/* Cambia a rosa palo cuando el enlace está activo o en hover */
+/* Estilo para el enlace activo con efecto de brillo */
+.navbar-custom .nav-link.active,
+.navbar-custom .nav-link:hover {
+    color: #cea1bc;
+    text-shadow: 0 0 8px rgba(255, 192, 203, 0.8), 
+                 0 0 10px rgba(255, 192, 203, 0.6);
+    transition: text-shadow 0.3s ease, color 0.3s ease; /* Transición suave */
+  
 }
-.card {
-    background-color: #495057; /* Fondo intermedio para tarjetas */
-    color: #ffffff;
+
+.contenido 
+ {
+  
+    
+    
+    background-color: #EAE0D5; /* Color de fondo similar al de la imagen */
+    border: black 1px solid;
+    position: relative;
+    top: 20px;  padding: 40px 20px; /* Ajusta el padding según sea necesario */
+    
+   
+  
+ }
+ #inicio {
+    position: relative;
+    text-align: center;
+    background-color: #EAE0D5; /* Color de fondo similar al de la imagen */
+    padding: 50px 50px; /* Ajusta el padding según sea necesario */
+
 }
-a {
-    color: #0d6efd; /* Color de enlaces */
+
+.card-title{
+    word-spacing: 5px; /* Ajusta la cantidad de espacio entre palabras según tus preferencias */
+    font-family: 'Montserrat', sans-serif;
+    padding-top: 30px;
+    font-size: 50px;
+    color: #C4B4A0;
+    text-shadow: 0 0 5px rgba(255, 192, 203, 0.7); 
+    text-align: center;
 }
+
+.card-text{
+    font-family: 'Montserrat', sans-serif;
+    padding-top: 0;
+    font-size: 200%;
+    padding-left: 10px;
+    padding-right: 10px;
+    justify-content: center;
+    text-shadow: 0 0 5px rgba(255, 192, 203, 0.7); 
+    text-align: center;
+    color: #C4B4A0;
+    flex-wrap: nowrap;
+}
+/* Contenedor principal */
+body, html {
+    height: 100%; /* Asegura que el body ocupe toda la altura */
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Contenido principal */
+.main-content {
+    flex: 1; /* Permite que el contenido principal se expanda */
+}
+/* Contenedor del botón */
+.boton-container {
+    display: flex;
+    justify-content: center;
+    background-color: #fff;  /* Fondo blanco */
+    padding: 20px 0;         /* Espaciado arriba y abajo del botón */
+}
+
+/* Estilo para el botón largo */
+.boton-largo {
+    display: block;
+    width: 80%;              /* Ocupa el 80% del ancho del contenedor */
+    max-width: 600px;        /* Limita el ancho máximo del botón */
+    padding: 15px;           /* Espaciado interior del botón */
+    text-align: center;
+    background-color: #EAE0D5;
+    color: #3C2C23;
+    border-radius: 30px;
+    font-weight: bold;
+    text-decoration: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s;
+    margin-top: 20px;  
+}
+
+.boton-largo:hover {
+    background-color: white;
+}
+
+/* Footer */
+.footer , .contenedor-footer{
+    text-align: center;
+    font-size: 14px;
+    
+    background-color: #D2B6A2;  /* Color de fondo */
+    opacity: 0.8; 
+    padding: 10px 0;
+    margin-top: auto; /* Empuja el footer al final */
+}
+
+
+.h3 {
+    background-color: #EAE0D5;
+    color: #3C2C23;
+    margin-top: 50px;
+}
+.w-100.btn {
+    background-color: #EAE0D5;
+    color: #3C2C23;
+}
+
+.w-100.btn:hover {
+    background-color: rgb(211, 156, 156);
+}
+
