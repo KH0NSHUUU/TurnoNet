@@ -3,62 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Página de Servicios</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>TurnoNet - Servicios</title>
+    <link rel="stylesheet" href="../static/styles.css">
     <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Bilbo+Swash+Caps&family=Dancing+Script:wght@600&family=Hind+Siliguri:wght@300&family=Josefin+Sans&family=Kalam:wght@700&family=Lora:ital@1&family=Oswald:wght@400;500&family=Shantell+Sans:ital@0;1&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        function mostrarFormulario(servicioId) {
-            // Ocultar todos los formularios de selección
-            const formularios = document.querySelectorAll('.formulario');
-            formularios.forEach(form => form.style.display = 'none');
-            
-            // Mostrar el formulario correspondiente al servicio seleccionado
-            const formulario = document.getElementById('formulario-' + servicioId);
-            if (formulario) {
-                formulario.style.display = 'block';
+        const HORARIO_APERTURA = 9;  // 9 AM
+        const HORARIO_CIERRE = 18;   // 6 PM
+
+        function verificarHora() {
+            const horaSeleccionada = document.getElementById('hora').value;
+            const hora = parseInt(horaSeleccionada.split(':')[0]);  
+
+            if (hora < HORARIO_APERTURA || hora >= HORARIO_CIERRE) {
+                alert('Por favor, seleccione una hora dentro del horario de trabajo (de 9 AM a 6 PM).');
+                return false;
             }
+            return true;
         }
 
         $(document).on('submit', 'form[id^="turnoForm-"]', function(e) {
-        e.preventDefault();
-        
-        const $form = $(this); // Obtén el formulario que se envió
-        const servicio_id = $form.find('input[name="servicio_id"]').val();
-        const empleado_id = $form.find('#empleado_id').val();
-        const fecha = $form.find('#fecha').val();
-        const hora = $form.find('#hora').val();
-
-        $.ajax({
-            url: '/servicios', // Cambia esto por tu ruta correcta
-            method: 'POST',
-            data: { 
-                servicio_id: servicio_id,
-                empleado_id: empleado_id,
-                fecha: fecha,
-                hora: hora
-            },
-            success: function() {
-                alert('Cita programada exitosamente.');
-                $form[0].reset(); // Reinicia el formulario
-                $('.formulario').hide(); // Oculta el formulario
-            },
-            error: function() {
-                alert('Error al programar la cita.');
+            if (!verificarHora()) {
+                e.preventDefault();  
             }
         });
-    });
+
+        $(document).ready(function() {
+            const today = new Date().toISOString().split('T')[0];
+            $('input[type="date"]').attr('min', today);
+        });
+
+        function mostrarFormulario(servicioId) {
+            $('.formulario').hide();
+            $('#formulario-' + servicioId).show();
+        }
+
+        $(document).on('submit', 'form[id^="turnoForm-"]', function(e) {
+            e.preventDefault();  // Detener el envío por defecto del formulario
+            
+            const $form = $(this);
+            const servicio_id = $form.find('input[name="servicio_id"]').val();
+            const empleado_id = $form.find('#empleado_id').val();
+            const fecha = $form.find('#fecha').val();
+            const hora = $form.find('#hora').val();
+
+            // Enviar datos a través de AJAX
+            $.ajax({
+                url: '/servicios',
+                method: 'POST',
+                data: {
+                    servicio_id, 
+                    empleado_id, 
+                    fecha, 
+                    hora
+                },
+                contentType: 'application/x-www-form-urlencoded', // Asegúrate de que el formato sea el adecuado
+                dataType: 'json', // Esperar una respuesta en formato JSON
+                success: function(response) {
+                    if (response.success) {
+                        alert('Cita programada exitosamente.');
+                    } else if (response.error) {
+                        alert(response.error);  // Muestra el error que devuelva el backend
+                    }
+                    $form[0].reset();  // Limpiar el formulario
+                    $('.formulario').hide(); // Ocultar formulario
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    alert('Error al programar la cita: ' + textStatus + ' - ' + errorThrown);
+                }
+            });
+        });
 
     </script>
 </head>
 <body>
 
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom fixed-top">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">TurnoNet</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <a class="navbar-brand" href="/cliente">TurnoNet</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
@@ -67,14 +94,14 @@
                         <a class="nav-link" href="/cliente">Inicio</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="/servicios">Servicios</a>
+                        <a class="nav-link active" href="/servicios">Servicios</a>
                     </li>
                     {% if session['rol'] == 'cliente' %}
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
                                 {{ session['nombre'] }}
                             </a>
-                            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                                 <li><a class="dropdown-item" href="/cliente/perfil">Perfil</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="/logout">Cerrar Sesión</a></li>
@@ -90,7 +117,7 @@
         </div>
     </nav>
 
-    <div class="container mt-5">
+    <div class="container contenedor mt-5">
         <h2 class="mb-4">Servicios Disponibles</h2>
         <div class="row">
             {% for servicio in servicios %}
@@ -99,7 +126,7 @@
                     <div class="card-body">
                         <h5 class="card-title">{{ servicio[1] }}</h5>
                         <p class="card-text">{{ servicio[2] }}</p>
-                        <p class="card-text"><strong>Precio: {{ servicio[3] }} $</strong></p>
+                        <p class="card-text"><strong>Precio: ${{ servicio[3] }} </strong></p>
                         <button class="btn btn-primary" onclick="mostrarFormulario({{ servicio[0] }})">Seleccionar</button>
                     </div>
                 </div>
@@ -122,7 +149,12 @@
                     </div>
                     <div class="mb-3">
                         <label for="hora" class="form-label">Hora:</label>
-                        <input type="time" class="form-control" id="hora" name="hora" required>
+                        <select class="form-select" id="hora" name="hora" required>
+                            <option value="">Seleccione una hora</option>
+                            {% for hora in horas_disponibles %}
+                                <option value="{{ hora }}">{{ hora }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
                     <button type="submit" class="btn btn-success">Programar Cita</button>
                 </form>                
@@ -132,9 +164,14 @@
     </div>
 
     <!-- Footer -->
-    <footer class="footer py-3 mt-5">
-        <div class="container text-center">
-            <span>&copy; 2024 TurnoNet. Todos los derechos reservados.</span>
+    <footer class="footer">
+        <div class="iconos">
+            <i class="fa fa-whatsapp" aria-hidden="true"></i>
+            <i class="fa fa-instagram" aria-hidden="true"></i>
+            <i class="fa fa-map-marker" aria-hidden="true"></i>      
+        </div>
+        <div class="contenedor-footer">
+            <span>&copy; 2024 TurnoNet. Desarrollado por Vladimir Veliz & Alejandra Gomez.</span>
         </div>
     </footer>
 

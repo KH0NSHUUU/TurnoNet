@@ -35,11 +35,11 @@
                         </div>
                         <div class="mb-3">
                             <label for="apellidoEmpleado">Apellido</label>
-                            <input type="text" class="form-control" id="apellidoEmpleado"  required>
+                            <input type="text" class="form-control" id="apellidoEmpleado" required>
                         </div>
                         <div class="mb-3">
                             <label for="telefonoEmpleado">Teléfono</label>
-                            <input type="text" class="form-control" id="telefonoEmpleado"  required>
+                            <input type="text" class="form-control" id="telefonoEmpleado" required>
                         </div>
                         <div class="mb-3">
                             <label for="correoEmpleado">Correo</label>
@@ -76,7 +76,7 @@
                 $('#verTurnos').show();
                 cargarTurnos();
             });
-            
+
             // Guardar cambios en el perfil
             $('#perfilForm').submit(function(e) {
                 e.preventDefault();
@@ -100,15 +100,11 @@
                 $.ajax({
                     url: '/empleado/perfil', // Cambia esto por tu ruta de modificación de perfil
                     method: 'PUT',
-                    contentType: 'application/json', // Enviar datos como JSON
-                    data: JSON.stringify(datosActualizar), // Convertir el objeto a una cadena JSON
+                    contentType: 'application/json',
+                    data: JSON.stringify(datosActualizar),
                     success: function() {
                         alert('Perfil actualizado correctamente.');
-
-                        // Actualizar el mensaje de bienvenida con el nuevo nombre
                         $('#nombreBienvenida').text(`Bienvenido, ${nuevoNombre}`);
-
-                        // Limpiar formulario y cerrar el modal de modificar perfil
                         $('#perfilForm')[0].reset();
                         $('#modificarPerfil').hide();
                     },
@@ -118,7 +114,7 @@
                 });
             });
 
-            // Función para cargar los turnos asignados
+            // Cargar turnos asignados
             function cargarTurnos() {
                 $.ajax({
                     url: '/empleado/turnos', // Ruta para cargar los turnos
@@ -126,14 +122,16 @@
                     success: function(data) {
                         $('#turnosContainer').empty();
                         data.forEach(function(turno) {
-                            const fecha = turno[0]; // datetime
-                            const nombreServicio = turno[1]; // ID del servicio
-                            const nombreCliente = turno[2]; // ID del cliente
-                            const apellidoCliente = turno[3];
-                            console.log("aqui",nombreServicio, nombreCliente);
+                            console.log(turno);
+                            const fecha = turno.fecha;
+                            const nombreServicio = turno.NomServicio;
+                            const nombreCliente = turno.NombreCliente;
+                            const apellidoCliente = turno.apellido;
+
                             $('#turnosContainer').append(`
                                 <div id="turno-${turno.id}">
-                                    <strong>${fecha}</strong> - Servicio: ${nombreServicio} - Cliente: ${nombreCliente} ${apellidoCliente} 
+                                    <strong>${fecha}</strong> - Servicio: ${nombreServicio} - Cliente: ${nombreCliente} ${apellidoCliente}
+                                    <button class="btn btn-sm btn-success finalizarTurno" data-id="${turno.id}">Finalizar Turno</button>
                                 </div>
                             `);
                         });
@@ -143,44 +141,25 @@
                     }
                 });
             }
-        });
-        //funcion para ver los turnos que tiene el empleado
-        $(document).ready(function() {
-        $('#btnVerTurnos').click(function() {
-            $('#modificarPerfil').hide();
-            $('#verTurnos').show();
-            cargarTurnos();
-        });
 
-        function cargarTurnos() {
-            $.ajax({
-                url: '/empleado/turnos', // Ruta para cargar los turnos
-                method: 'GET',
-                success: function(data) {
-                    $('#turnosContainer').empty();
-                    data.forEach(function(turno) {
-                        const fecha = turno.fecha; // datetime
-                        const nombreServicio = turno.NomServicio; // Nombre del servicio
-                        const nombreCliente = turno.NombreCliente; // Nombre del cliente
-                        const apellidoCliente = turno.apellido;
-                        
-                        // Agregar los datos al contenedor
-                        $('#turnosContainer').append(`
-                            <div id="turno-${turno.id}">
-                                <strong>${fecha}</strong> - Servicio: ${nombreServicio} - Cliente: ${nombreCliente} ${apellidoCliente} 
-                            </div>
-                        `);
-                    });
-         },
-        error: function() {
-            alert('Error al cargar los turnos.');
-        }
+            // Finalizar turno
+            $(document).on('click', '.finalizarTurno', function() {
+                const turnoId = $(this).data('id');
+                console.log('aqui'+turnoId)
+
+                $.ajax({
+                    url: `/empleado/turno/${turnoId}/finalizar`,
+                    method: 'PUT',
+                    success: function() {
+                        alert('Turno finalizado correctamente.');
+                        $(`#turno-${turnoId}`).remove();
+                    },
+                    error: function() {
+                        alert('Error al finalizar el turno.');
+                    }
+                });
+            });
         });
-    }
-
-});
-
-</script>
-    
+    </script>
 </body>
 </html>

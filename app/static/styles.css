@@ -28,6 +28,22 @@ body {
   
 }
 
+.dropdown-menu {
+    min-width: 200px; /* Asegura que el menú tenga suficiente ancho */
+    padding: 10px 0; /* Añade un poco de espacio vertical entre los elementos */
+}
+
+.dropdown-item {
+    padding: 8px 16px; /* Ajusta el espaciado interior */
+    text-align: left;  /* Alinea el texto a la izquierda */
+}
+
+.dropdown-menu {
+    z-index: 1050; /* Coloca el menú encima de otros elementos */
+}
+
+
+
 .contenido 
  {
   

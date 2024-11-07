@@ -1,5 +1,7 @@
 from flask import render_template, request, redirect, session, url_for, flash, jsonify
 from app import app, mysql
+from datetime import datetime, timedelta
+import locale
 
 @app.route('/')
 def index():
@@ -18,6 +20,9 @@ def login():
             session['dni'] = user[0]
             session['nombre'] = user[1]
             session['apellido'] = user[2]
+            session['contacto'] = user[3]
+            session['correo'] = user[4]
+            session['contraseña'] = user[5]
             session['rol'] = user[6]  # Rol del usuario
 
             next_page=request.args.get('next')
@@ -221,11 +226,11 @@ def modificar_perfil_empleado():
     session['nombre']=datos['nombre']
     return jsonify({'status': 'success'})
 
+
 @app.route('/servicios', methods=['GET', 'POST'])
 def listar_servicios():
     # Verifica si el usuario está logueado
     if 'dni' not in session:
-        # Redirigir a la página de login y pasar la URL actual como 'next'
         return redirect(url_for('login', next=request.url))
 
     if 'rol' in session and session['rol'] == 'cliente':
@@ -236,24 +241,60 @@ def listar_servicios():
             servicios = cur.fetchall()
             cur.execute('SELECT * FROM empleados')
             empleados = cur.fetchall()
+
+            # Generar todas las horas posibles de 30 minutos entre las 9 AM y las 6 PM
+            horas_disponibles = []
+            inicio = datetime.strptime("09:00", "%H:%M")
+            fin = datetime.strptime("18:00", "%H:%M")
+
+            while inicio < fin:
+                hora_str = inicio.strftime("%H:%M")
+                # Verificar si la hora ya está ocupada
+                cur.execute('SELECT * FROM turnos WHERE fecha LIKE %s', (f"%{hora_str}%",))
+                turno_existente = cur.fetchone()
+                if not turno_existente:
+                    horas_disponibles.append(hora_str)
+                inicio += timedelta(minutes=30)  # Incremento de 30 minutos
+
             cur.close()
-            return render_template('servicios.html', servicios=servicios, empleados=empleados)
+            return render_template('servicios.html', servicios=servicios, empleados=empleados, horas_disponibles=horas_disponibles)
 
         elif request.method == 'POST':
-            servicio_id = request.form['servicio_id']
-            fecha = request.form['fecha']
-            hora = request.form['hora']
+            # Verifica que los datos estén presentes
+            servicio_id = request.form.get('servicio_id')
+            empleado_id = request.form.get('empleado_id')
+            fecha = request.form.get('fecha')
+            hora = request.form.get('hora')
+
+            if not servicio_id or not empleado_id or not fecha or not hora:
+                return jsonify({'error': 'Todos los campos son requeridos.'})
+
             fechaHora = f'{fecha} {hora}'
-            estado = 'tomado'
-            empleado_id = request.form['empleado_id']
-            dni_cliente = session['dni']  # Obteniendo el dni del cliente desde la sesión
-            print(f"Servicio ID: {servicio_id}, Fecha: {fecha}, Hora: {hora}, Empleado ID: {empleado_id}, DNI Cliente: {dni_cliente}")
+            dni_cliente = session['dni']  # Obtener el DNI desde la sesión
+
+            # Verificar si la hora está dentro del horario permitido
+            hora_turno = datetime.strptime(hora, '%H:%M').hour
+            if hora_turno < 9 or hora_turno >= 18:
+                cur.close()
+                return jsonify({'error': 'La hora seleccionada está fuera del horario de trabajo. Por favor, elija una hora entre las 9 AM y las 6 PM.'})
+
+            # Verificar si el turno ya está ocupado
+            cur.execute('SELECT * FROM turnos WHERE fecha = %s', (fechaHora,))
+            turno_existente = cur.fetchone()
+            if turno_existente:
+                cur.close()
+                return jsonify({'error': 'La hora seleccionada está ocupada. Intente con otra.'})
+
+            # Si todo es válido, insertar el turno en la base de datos
+            estado = 'reservado'
             cur.execute('INSERT INTO turnos(fecha, estado, id_empleado, id_cliente, id_servicio) values (%s, %s, %s, %s, %s)', (fechaHora, estado, empleado_id, dni_cliente, servicio_id))
             mysql.connection.commit()
             cur.close()
-            return jsonify(success=True)
+            return jsonify({'success': True})
 
+    return jsonify({'error': 'Acceso denegado.'})
 
+        
 @app.route('/cliente')
 def cliente():
     if 'rol' in session and session['rol'] == 'cliente':
@@ -262,13 +303,30 @@ def cliente():
         flash('Acceso denegado.', 'danger')
         return redirect(url_for('login'))
     
-@app.route('/cliente/perfil')
-def perfil():
+@app.route('/cliente/perfil', methods=['GET', 'POST'])
+def perfil_cliente():
+    print(session)
     if 'rol' in session and session['rol'] == 'cliente':
-        # Aquí podrías obtener los datos del cliente desde la base de datos
-        return render_template('perfil.html')  # Crea este archivo HTML para el perfil del cliente.
+        dni_cliente = session['dni']
+        cur = mysql.connection.cursor()
+
+        # Consulta para obtener los turnos del cliente logueado
+        cur.execute('SELECT t.fecha, t.estado, s.nombre AS servicio, e.nombre AS empleado_nombre, e.apellido AS empleado_apellido, s.precio '
+            'FROM turnos AS t '
+            'INNER JOIN servicios AS s ON t.id_servicio = s.id '
+            'INNER JOIN empleados AS e ON t.id_empleado = e.dni '
+            'WHERE t.id_cliente = %s '
+            'ORDER BY t.fecha ASC', (dni_cliente,))
+
+        turnos = cur.fetchall()
+        cur.close()
+
+        return render_template('perfil.html', turnos=turnos)
     else:
+        flash('Acceso denegado.', 'danger')
         return redirect(url_for('login'))
+
+
 
 @app.route('/cliente/perfil/actualizar', methods=['POST'])
 def actualizar_perfil():
@@ -295,27 +353,68 @@ def actualizar_perfil():
     else:
         return redirect(url_for('login'))
 
-#turnos
 @app.route('/empleado/turnos', methods=['GET'])
 def obtener_turnos_empleado(): 
     if 'rol' in session and session['rol'] == 'empleado': 
         id_empleado = session['dni']
         cur = mysql.connection.cursor()
-        
-        cur.execute('SELECT t.fecha, s.nombre, c.nombre, c.apellido '
-                    'FROM turnos AS t '
-                    'INNER JOIN servicios AS s ON t.id_servicio = s.id '
-                    'INNER JOIN clientes AS c ON t.id_cliente = c.dni '
-                    'WHERE t.id_empleado = %s', (id_empleado,))
+        print(f"ID empleado: {id_empleado}")
+
+        cur.execute('SELECT t.id, t.fecha, s.nombre, c.nombre, c.apellido '
+            'FROM turnos AS t '
+            'INNER JOIN servicios AS s ON t.id_servicio = s.id '
+            'INNER JOIN clientes AS c ON t.id_cliente = c.dni '
+            'WHERE t.id_empleado = %s and estado != "finalizado" '
+            'ORDER BY t.fecha ASC', (id_empleado,))
         
         turnos = cur.fetchall()
         cur.close()
-      
-        # Cambiar los nombres de las claves para que sean únicos
-        return jsonify([
-            {'fecha': turno[0], 'NomServicio': turno[1], 'NombreCliente': turno[2], 'apellido': turno[3]} for turno in turnos
-        ])
+
+        # Establecer el idioma español
+        locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
+
+        # Formatear la fecha
+        turnos_formateados = []
+        for turno in turnos:
+            # La fecha ya es un objeto datetime, por lo que solo lo formateamos directamente
+            fecha_obj = turno[1]
+            # Formatear la fecha en español
+            fecha_formateada = fecha_obj.strftime("%A, %d de %B de %Y %H:%M:%S")
+            turnos_formateados.append({
+                'id': turno[0],
+                'fecha': fecha_formateada,  # Fecha ya formateada
+                'NomServicio': turno[2],
+                'NombreCliente': turno[3],
+                'apellido': turno[4]
+            })
+        
+        # Responder con los turnos formateados
+        return jsonify(turnos_formateados)
     else: 
         flash('Acceso denegado.')
         return redirect(url_for('login'))
+    
+@app.route('/empleado/turno/<int:turno_id>/finalizar', methods=['PUT'])
+def finalizar_turno(turno_id):
+    cur = mysql.connection.cursor()
+
+    # Verificar si el turno existe
+    cur.execute('SELECT estado FROM turnos WHERE id = %s', (turno_id,))
+    turno = cur.fetchone()
+
+    if turno:
+        if turno[0] == 'finalizado':
+            return jsonify({"error": "Este turno ya ha sido finalizado"}), 400
+
+        # Actualizar el estado del turno a 'Finalizado'
+        cur.execute('UPDATE turnos SET estado = "finalizado" WHERE id = %s', (turno_id,))
+        mysql.connection.commit()  # Guardar los cambios en la base de datos
+
+        return jsonify({"message": "Turno finalizado correctamente"}), 200
+    else:
+        return jsonify({"error": "Turno no encontrado"}), 404
+
+    cur.close()
+
+
     

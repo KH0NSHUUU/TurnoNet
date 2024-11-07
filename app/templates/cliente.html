@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Página del Cliente - TurnoNet</title>
+    <title>TurnoNet - Clientes</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="../static/styles.css">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -11,13 +12,13 @@
 <body>
 
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom fixed-top">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">TurnoNet</a>
+            <a class="navbar-brand" href="/cliente">TurnoNet</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
+            <div class="collapse navbar-collapse" id="navbarNavDropdown">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
                         <a class="nav-link" href="/cliente">Inicio</a>
@@ -25,29 +26,23 @@
                     <li class="nav-item">
                         <a class="nav-link active" aria-current="page" href="/servicios">Servicios</a>
                     </li>
-                    {% if session['rol'] == 'cliente' %}
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                {{ session['nombre'] }}
-                            </a>
-                            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                <li><a class="dropdown-item" href="/cliente/perfil">Perfil</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="/logout">Cerrar Sesión</a></li>
-                            </ul>
-                        </li>
-                    {% else %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="/login">Iniciar Sesión</a>
-                        </li>
-                    {% endif %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            {{ session['nombre'] }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="/cliente/perfil">Perfil</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/logout">Cerrar Sesión</a></li>
+                        </ul>
+                    </li>
                 </ul>
             </div>
         </div>
     </nav>
 
     <!-- Contenido Principal -->
-    <div class="container mt-5">
+    <div class="container contenedor mt-5">
         <div class="row">
             <div class="col-lg-8 mx-auto">
                 <div class="card p-4">
@@ -55,16 +50,24 @@
                     <p class="card-text">
                         Gestión eficiente de turnos para estéticas, peluquerías y otros negocios. Automatiza la reserva de citas y mejora la experiencia de tus clientes.
                     </p>
-                    <a href="/servicios" class="btn btn-primary">Ver Servicios</a> <!-- Redirecciona a servicios -->
+                    <div class="boton-container">
+                        <a href="/servicios" class="boton-largo">Ver Servicios</a> <!-- Redirecciona a servicios -->
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Footer -->
-    <footer class="footer py-3 mt-5">
-        <div class="container text-center">
-            <span style="color: white;">&copy; 2024 TurnoNet. Todos los derechos reservados.</span>
+    <footer class="footer">
+        <div class="iconos">
+            <i style="color: black;" class="fa fa-whatsapp" aria-hidden="true"></i>
+            <i class="fa fa-instagram" aria-hidden="true"></i>
+            <i class="fa fa-map-marker" aria-hidden="true"></i>      
+
+        </div>
+        <div class="contenedor-footer">
+            <span>&copy; 2024 TurnoNet. Desarrollado por Vladimir Veliz & Alejandra Gomez.</span>
         </div>
     </footer>
 
